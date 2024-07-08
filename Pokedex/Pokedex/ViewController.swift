@@ -19,3 +19,7 @@ class ViewController: UIViewController {
 
 }
 
+
+#Preview {
+    return UINavigationController(rootViewController: ViewController())
+}
