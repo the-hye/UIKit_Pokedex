@@ -8,24 +8,37 @@
 import Foundation
 
 class PokemonAPI {
-    static let baseURL = "https://pokeapi.co/api/v2/"
+    static let shared = PokemonAPI()
     
-    static func fetchPokemonList(completion: @escaping (PokemonList?) -> Void) {
-        guard let url = URL(string: baseURL + "pokemon?limit=10000&offset=0") else { return }
+    func fetchPokemonList(completion: @escaping (Result<PokemonList, Error>) -> Void) {
+        let urlString = "https://pokeapi.co/api/v2/pokemon?limit=10000&offset=0"
+        performRequest(with: urlString, decodingType: PokemonList.self, completion: completion)
+    }
+    
+    func fetchPokemonDetail(url: String, completion: @escaping (Result<Pokemon, Error>) -> Void) {
+        performRequest(with: url, decodingType: Pokemon.self, completion: completion)
+    }
+    
+    private func performRequest<T: Decodable>(with urlString: String, decodingType: T.Type, completion: @escaping (Result<T,Error>) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
+            return
+        }
         
-        // dataTask는 비동기 방식으로 메인 스레드를 방해하지 않는다.
-        URLSession.shared.dataTask(with: url) { data, _, error  in
-            guard let data = data, error == nil else {
-                completion(nil)
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
                 return
             }
-            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "No data received", code: 0, userInfo: nil)))
+                return
+            }
             do {
-                let pokemonList = try JSONDecoder().decode(PokemonList.self, from: data)
-                completion(pokemonList)
+                let decodeData = try JSONDecoder().decode(T.self, from: data)
+                completion(.success(decodeData))
             } catch {
-                print("Error decoding JSON: \(error)")
-                completion(nil)
+                completion(.failure(error))
             }
         }
         .resume()

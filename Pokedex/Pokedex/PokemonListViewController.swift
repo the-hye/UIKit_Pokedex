@@ -16,8 +16,6 @@ class PokemonListViewController: UIViewController, UITableViewDelegate, UITableV
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-//        view.addSubview(tableView)
         setupUI()
         fetchPokemonList()
     }
@@ -32,16 +30,22 @@ class PokemonListViewController: UIViewController, UITableViewDelegate, UITableV
         title = "Pokedex"
     }
     
+    // MARK: - Methods
     private func fetchPokemonList() {
-        PokemonAPI.fetchPokemonList { [weak self] pokemonList in
-            guard let self = self, let pokemonList = pokemonList else { return }
-            self.pokemonList = pokemonList.results
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
+        PokemonAPI.shared.fetchPokemonList { [weak self] result in
+            switch result {
+            case .success(let pokemonList):
+                self?.pokemonList = pokemonList.results
+                DispatchQueue.main.async {
+                    self?.tableView.reloadData()
+                }
+            case .failure(let error):
+                print("Error fetching pokemon list - \(error.localizedDescription)")
             }
         }
     }
     
+    // MARK: - UIViewDateSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return pokemonList.count
     }
@@ -49,11 +53,17 @@ class PokemonListViewController: UIViewController, UITableViewDelegate, UITableV
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PokemonCell", for: indexPath)
         let pokemon = pokemonList[indexPath.row]
-        cell.textLabel?.text = pokemon.name.capitalized
+        cell.textLabel?.text = "\(pokemon.name.capitalized)"
         return cell
     }
     
-    
+    //MARK: - UIViewDelegate
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let selectedPokemon = pokemonList[indexPath.row]
+        let detailViewController = PokemonDetailViewController(pokemonURL: selectedPokemon.url)
+        navigationController?.pushViewController(detailViewController, animated: true)
+    }
+
 }
 
 

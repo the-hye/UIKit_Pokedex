@@ -24,10 +24,10 @@ struct PokemonListObject: Codable {
 struct Pokemon: Codable {
     let id: Int
     let name: String
-    let spirites: Spirites
+    let sprites: Sprites
 }
 
-struct Spirites: Codable {
+struct Sprites: Codable {
     let frontDefault: String
     
     enum CodingKeys: String, CodingKey {
